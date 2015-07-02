@@ -15,24 +15,14 @@ MOFILES = nl.mo de.mo ru.mo zh_CN.mo
 
 
 all: $(OUTFILE)
-install: install-bin install-etc install-man
-uninstall: uninstall-bin uninstall-etc uninstall-man
+install: install-bin install-etc
+uninstall: uninstall-bin uninstall-etc
 
 clean:
 	rm -f *.o $(OUTFILE) search core *.mo
 
 distclean: clean
 	rm -f Makefile.settings config.h axel-*.tar axel-*.tar.gz axel-*.tar.bz2
-
-install-man:
-	mkdir -p $(DESTDIR)$(MANDIR)/man1/
-	cp axel.1 $(DESTDIR)$(MANDIR)/man1/axel.1
-	mkdir -p $(DESTDIR)$(MANDIR)/zh_CN/man1/
-	cp axel_zh_CN.1 $(DESTDIR)$(MANDIR)/zh_CN/man1/axel.1
-
-uninstall-man:
-	rm -f $(MANDIR)/man1/axel.1
-	rm -f $(MANDIR)/zh_CN/man1/axel.1
 
 install-etc:
 	mkdir -p $(DESTDIR)$(ETCDIR)/
