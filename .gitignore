@@ -1,0 +1,4 @@
+#ignore any buid folders
+build*/
+#ignore temporary vim files
+*.swp
