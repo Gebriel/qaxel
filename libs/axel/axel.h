@@ -103,6 +103,9 @@ typedef struct
 	int ready;
 	message_t *message;
 	url_t *url;
+
+	/* private: used to store downloaded data */
+	char *buffer;
 } axel_t;
 
 axel_t *axel_new( conf_t *conf, int count, void *url );

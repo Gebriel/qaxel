@@ -57,6 +57,7 @@ typedef struct
 } conn_t;
 
 int conn_set( conn_t *conn, char *set_url );
+/* use free when done with the string */
 char *conn_url( conn_t *conn );
 void conn_disconnect( conn_t *conn );
 int conn_init( conn_t *conn );

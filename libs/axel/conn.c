@@ -25,8 +25,6 @@
 
 #include "axel.h"
 
-char string[MAX_STRING];
-
 /* Convert an URL to a conn_t structure					*/
 int conn_set( conn_t *conn, char *set_url )
 {
@@ -147,6 +145,13 @@ int conn_set( conn_t *conn, char *set_url )
 /* Generate a nice URL string.						*/
 char *conn_url( conn_t *conn )
 {
+	char *string;
+
+	/* use the heap instead of a global variable */
+	string = malloc( MAX_STIRNG );
+	if ( !string )
+		return( NULL );
+
 	if( conn->proto == PROTO_FTP )
 		strcpy( string, "ftp://" );
 	else
@@ -329,8 +334,10 @@ int conn_info( conn_t *conn )
 			sscanf( t, "%255s", s );
 			if( strstr( s, "://" ) == NULL)
 			{
-				sprintf( conn->http->headers, "%s%s",
-					conn_url( conn ), s );
+				char *url;
+				url = conn_url( conn );
+				sprintf( conn->http->headers, "%s%s", url, s );
+				free( url );
 				strncpy( s, conn->http->headers, MAX_STRING );
 			}
 			else if( s[0] == '/' )

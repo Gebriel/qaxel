@@ -31,8 +31,6 @@ static void *setup_thread( void * );
 static void axel_message( axel_t *axel, char *format, ... );
 static void axel_divide( axel_t *axel );
 
-static char *buffer = NULL;
-
 /* Create a new axel_t structure					*/
 axel_t *axel_new( conf_t *conf, int count, void *url )
 {
@@ -57,8 +55,7 @@ axel_t *axel_new( conf_t *conf, int count, void *url )
 		}
 		axel->delay_time = (int) ( (float) 1000000 / axel->conf->max_speed * axel->conf->buffer_size * axel->conf->num_connections );
 	}
-	if( buffer == NULL )
-		buffer = malloc( max( MAX_STRING, axel->conf->buffer_size ) );
+	axel->buffer = malloc( max( MAX_STRING, axel->conf->buffer_size ) );
 	
 	if( count == 0 )
 	{
@@ -120,6 +117,7 @@ axel_t *axel_new( conf_t *conf, int count, void *url )
 	}
 	s = conn_url( axel->conn );
 	strncpy( axel->url->text, s, MAX_STRING );
+	free( s );
 	if( ( axel->size = axel->conn[0].size ) != INT_MAX )
 	{
 		if( axel->conf->verbose > 0 )
@@ -141,7 +139,7 @@ int axel_open( axel_t *axel )
 	
 	if( axel->conf->verbose > 0 )
 		axel_message( axel, _("Opening output file %s"), axel->filename );
-	snprintf( buffer, MAX_STRING, "%s.st", axel->filename );
+	snprintf( axel->buffer, MAX_STRING, "%s.st", axel->filename );
 	
 	axel->outfd = -1;
 	
@@ -155,7 +153,7 @@ int axel_open( axel_t *axel )
 		axel->conn = realloc( axel->conn, sizeof( conn_t ) );
 		axel_divide( axel );
 	}
-	else if( ( fd = open( buffer, O_RDONLY ) ) != -1 )
+	else if( ( fd = open( axel->buffer, O_RDONLY ) ) != -1 )
 	{
 		read( fd, &axel->conf->num_connections, sizeof( axel->conf->num_connections ) );
 		
@@ -201,11 +199,11 @@ int axel_open( axel_t *axel )
 			   starting. Slow..				*/
 			axel_message( axel, _("Crappy filesystem/OS.. Working around. :-(") );
 			lseek( axel->outfd, 0, SEEK_SET );
-			memset( buffer, 0, axel->conf->buffer_size );
+			memset( axel->buffer, 0, axel->conf->buffer_size );
 			j = axel->size;
 			while( j > 0 )
 			{
-				write( axel->outfd, buffer, min( j, axel->conf->buffer_size ) );
+				write( axel->outfd, axel->buffer, min( j, axel->conf->buffer_size ) );
 				j -= axel->conf->buffer_size;
 			}
 		}
@@ -313,7 +311,7 @@ void axel_do( axel_t *axel )
 	if( FD_ISSET( axel->conn[i].fd, fds ) )
 	{
 		axel->conn[i].last_transfer = gettime();
-		size = read( axel->conn[i].fd, buffer, axel->conf->buffer_size );
+		size = read( axel->conn[i].fd, axel->buffer, axel->conf->buffer_size );
 		if( size == -1 )
 		{
 			if( axel->conf->verbose )
@@ -362,7 +360,7 @@ void axel_do( axel_t *axel )
 		}
 		/* This should always succeed..				*/
 		lseek( axel->outfd, axel->conn[i].currentbyte, SEEK_SET );
-		if( write( axel->outfd, buffer, size ) != size )
+		if( write( axel->outfd, axel->buffer, size ) != size )
 		{
 			
 			axel_message( axel, _("Write error!") );
@@ -467,8 +465,8 @@ void axel_close( axel_t *axel )
 	/* Delete state file if necessary				*/
 	if( axel->ready == 1 )
 	{
-		snprintf( buffer, MAX_STRING, "%s.st", axel->filename );
-		unlink( buffer );
+		snprintf( axel->buffer, MAX_STRING, "%s.st", axel->filename );
+		unlink( axel->buffer );
 	}
 	/* Else: Create it.. 						*/
 	else if( axel->bytes_done > 0 )
@@ -490,7 +488,7 @@ void axel_close( axel_t *axel )
 		conn_disconnect( &axel->conn[i] );
 
 	free_axel_t( axel );
-	free( buffer );
+	free( axel->buffer );
 }
 
 /* time() with more precision						*/
